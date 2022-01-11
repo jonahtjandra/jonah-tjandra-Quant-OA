@@ -2,23 +2,21 @@
 
 ### How to run the script?
 
-This explains in detail how to run the script with your own email template and data source and also how the script works in general.
+First and foremost, pip install the dependencies of the program by using this command: "python -m pip install -r requirements.txt"
 
 The entry point to run the script is the main.py file. In order to run the script properly, main.py will need 2 system arguments: source_data and template. In order to feed this in, use short ops: -t and -d for template and source_data respectively or use long ops --template --source_data. E.g: python main.py -t [template path] -d [source data path]
 
-- Explains input: Template needs to specify the subject of the email by writing "subject:" as the first word of a line which signifies that line be the subject of the email.
+- Input: Template needs to specify the subject of the email by writing "subject:" as the first word of a line which signifies that line be the subject of the email. The template also needs to include open and close patterns with their keywords enclosed inside these patterns. These keywords will be matched with the source data. All source data needs to include "to", "cc", and "bcc" columns as they will be used in completing the JSON format. Only the "cc" and "bcc" columns are allowed to contain null or empty values.
 
-- Explains runtime complexities
-
-- Explains output: In order for the output to preserve the spacing of the email template, the json body output will contain a list of lines, where an empty line would give an empty string
+- Output: In order for the output to preserve the spacing of the email template, the json body output will contain a list of lines.
 
 ### Code Structure
 
-This explains the structure of the program and how it works.
+The program primarly lives in the email_filler.py. This is the only module you will need to import (assuming dependencies are fullfilled) when using this program in another codebase. The main.py just serves as a driver script for the email_filler.py. email_filler.py is a class that stores information about parsing data into email templates. This is done to allow developers to access insightful information about parsing processes, especially with source_data that have very large sizes. In the src directory we also have 3 important sub-directories: result, test, and sample_data. Result is where the test results are stored and test is the unit testing and sample_data is the data used for testing this program.
 
 ### Dealing with patterns and custom patterns
 
-- Default patterns are set to an open pattern: \_[ and a close pattern: ]\_.
+- Default patterns are set to an open pattern: \_\_[ and a close pattern: ]\_\_.
 
 - Pattern customization requires user to provide both an open and close pattern.
 
@@ -45,14 +43,6 @@ This explains the structure of the program and how it works.
 - Make sure to check that the csv file is in the correct format
 
 - Make sure program is able to handle multiple patterns in one line
-
-### Test Cases
-
-This is stubbed out
-
-### Exception explanations
-
-This is stubbed out
 
 ### Libraries used
 
