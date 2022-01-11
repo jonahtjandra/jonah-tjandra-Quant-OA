@@ -55,7 +55,6 @@ class EmailFiller:
                 continue
             else:
                 if self.source_df[column].isnull().values.any():
-                    print(self.source_df[column].values)
                     raise Exception(
                         f"Columns in the source data except for cc and bcc are not allowed to be null. Column {column} has null values"
                     )
@@ -89,7 +88,6 @@ class EmailFiller:
         result = []
         regex_pattern = f"{self.open_pattern}.+{self.close_pattern}"
         keywords_pattern = f"(?<={self.open_pattern})(.+)(?={self.close_pattern})"
-        print(keywords_pattern)
         for index, row in self.source_df.iterrows():
             logging.info(f"We are processing row {index}")
             record = {
@@ -114,11 +112,9 @@ class EmailFiller:
                     # handling multiple patterns in a line
                     line_replace = line
                     for pattern, keyword in zip(patterns, keywords):
-                        print(pattern, row[keyword])
                         line_replace = re.sub(
                             f"{self.open_pattern}{keyword}{self.close_pattern}",
                             row[keyword], line_replace)
-                        print(line_replace)
                     record["body"].append(line_replace)
             result.append(record)
 
