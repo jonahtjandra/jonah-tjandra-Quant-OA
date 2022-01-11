@@ -60,8 +60,9 @@ class EmailFiller:
 
     def check_template(self) -> None:
         template_file = open(self.template, "r")
+        template_string = template_file.read()
         keywords_pattern = f"(?<={self.open_pattern})(.+)(?={self.close_pattern})"
-        keywords = re.findall(keywords_pattern, template_file.read())
+        keywords = re.findall(keywords_pattern, template_string)
         # check if all keywords in the template exist as a column in source data
         for keyword in keywords:
             if not keyword in self.source_df.columns:
@@ -85,14 +86,14 @@ class EmailFiller:
         close_pattern = re.sub(r"\\", "", self.close_pattern)
         for j in range(len(close_pattern)):
             keywords_pattern = f"([,.!\?(\* ])(?<={re.escape(open_pattern)})(.+)(?={re.escape(close_pattern[0:j] + close_pattern[j+1:])})([,.!\?(\* ])"
-            if len(re.findall(keywords_pattern, template_file.read())) != 0:
+            if len(re.findall(keywords_pattern, template_string)) != 0:
                 logging.warning(
                     "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
                 )
 
         for i in range(len(self.open_pattern)):
             keywords_pattern = f"([,.!\?(\* ])(?<={re.escape(open_pattern[0:i] + open_pattern[i+1:])})(.+)(?={re.escape(close_pattern)})([,.!\?(\* ])"
-            if len(re.findall(keywords_pattern, template_file.read())) != 0:
+            if len(re.findall(keywords_pattern, template_string)) != 0:
                 logging.warning(
                     "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
                 )
@@ -101,6 +102,9 @@ class EmailFiller:
     # output_file: path to where we want to save our result
     # return: status of filling template, returning issues, warnings, or errors
     def fill_template(self, output_file: str) -> str:
+        template_file = open(self.template, "r+")
+        template_string = template_file.read()
+        template_file.close()
         # check the source data obeys null value rule as per documentation
         self.check_source_data()
         status = {"time elapsed": "", "patterns": [], "warning": []}
@@ -114,13 +118,12 @@ class EmailFiller:
                 "cc": row["cc"] if row["cc"] == NaN else "",
                 "bcc": row["bcc"] if row["bcc"] == NaN else "",
                 "subject": "test_run_no_subject_yet",
-                "body": []
+                "body": ""
             }
-            file = open(self.template, "r")
-            for line in file:
-                # find patterns
-                patterns = re.findall(regex_pattern, str(line))
-                keywords = re.findall(keywords_pattern, str(line))
+            # find patterns
+            template_file = open(self.template, "r+")
+            keywords = re.findall(keywords_pattern, template_string)
+            for line in template_file:
                 # check for subject in email template
                 if line[0:8].lower() == "subject:":
                     record["subject"] = line[8:]
@@ -130,12 +133,14 @@ class EmailFiller:
                 else:
                     # handling multiple patterns in a line
                     line_replace = line
-                    for pattern, keyword in zip(patterns, keywords):
+                    for keyword in keywords:
                         line_replace = re.sub(
                             f"{self.open_pattern}{keyword}{self.close_pattern}",
                             row[keyword], line_replace)
-                    record["body"].append(line_replace)
+                    record["body"] += line_replace
             result.append(record)
+
+        template_file.close()
 
         # write result to json file
         json_output = json.dumps(result, indent=2)
