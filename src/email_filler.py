@@ -18,8 +18,8 @@ class EmailFiller:
     def __init__(self,
                  template: str,
                  source_data: str,
-                 open_pattern: str = "__[",
-                 close_pattern: str = "]__") -> None:
+                 open_pattern: str = "__\[",
+                 close_pattern: str = "\]__") -> None:
         # ensure open and close patterns are each less than or equal to 5 characters long as per documentation
         if not len(open_pattern) <= 5 and len(close_pattern) <= 5:
             raise Exception(
@@ -68,7 +68,9 @@ class EmailFiller:
         self.check_source_data()
         status = {"time elapsed": "", "patterns": [], "warning": []}
         result = []
-        regex_pattern = (rf"{self.open_pattern}.+{self.close_pattern}")
+        regex_pattern = f"{self.open_pattern}.+{self.close_pattern}"
+        keywords_pattern = f"(?<={self.open_pattern})(.+)(?={self.close_pattern})"
+        print(keywords_pattern)
         for index, row in self.source_df.iterrows():
             logging.info(f"We are processing row {index}")
             record = {
@@ -81,7 +83,8 @@ class EmailFiller:
             file = open(self.template, "r")
             for line in file:
                 # find patterns
-                patterns = re.findall(regex_pattern, line)
+                patterns = re.findall(regex_pattern, str(line))
+                keywords = re.findall(keywords_pattern, str(line))
                 # check for subject in email template
                 if line[0:8].lower() == "subject:":
                     record["subject"] = line[8:]
@@ -91,13 +94,12 @@ class EmailFiller:
                 else:
                     # handling multiple patterns in a line
                     line_replace = line
-                    for pattern in patterns:
-                        keyword = row[str(
-                            pattern[(len(self.open_pattern) -
-                                     1):(len(pattern) -
-                                         len(self.close_pattern))])]
-
-                        line_replace = re.sub(pattern, keyword, line_replace)
+                    for pattern, keyword in zip(patterns, keywords):
+                        print(pattern, row[keyword])
+                        line_replace = re.sub(
+                            f"{self.open_pattern}{keyword}{self.close_pattern}",
+                            row[keyword], line_replace)
+                        print(line_replace)
                     record["body"].append(line_replace)
             result.append(record)
 
