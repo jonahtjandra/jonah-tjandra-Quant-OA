@@ -61,10 +61,10 @@ class EmailFiller:
     def check_template(self) -> None:
         template_file = open(self.template, "r")
         keywords_pattern = f"(?<={self.open_pattern})(.+)(?={self.close_pattern})"
-        keywords = re.findall(keywords_pattern, str(template_file))
+        keywords = re.findall(keywords_pattern, template_file.read())
         # check if all keywords in the template exist as a column in source data
         for keyword in keywords:
-            if not self.source_df[keyword]:
+            if not keyword in self.source_df.columns:
                 raise Exception(
                     "Keyword '{keyword}' is not in the source data. Please check that the keywords and columns match."
                 )
@@ -85,17 +85,18 @@ class EmailFiller:
         close_pattern = re.sub(r"\\", "", self.close_pattern)
         for j in range(len(close_pattern)):
             keywords_pattern = f"([,.!\?(\* ])(?<={re.escape(open_pattern)})(.+)(?={re.escape(close_pattern[0:j] + close_pattern[j+1:])})([,.!\?(\* ])"
-            if len(re.findall(keywords_pattern, str(template_file))) != 0:
+            if len(re.findall(keywords_pattern, template_file.read())) != 0:
                 logging.warning(
                     "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
                 )
 
         for i in range(len(self.open_pattern)):
             keywords_pattern = f"([,.!\?(\* ])(?<={re.escape(open_pattern[0:i] + open_pattern[i+1:])})(.+)(?={re.escape(close_pattern)})([,.!\?(\* ])"
-            if len(re.findall(keywords_pattern, str(template_file))) != 0:
+            if len(re.findall(keywords_pattern, template_file.read())) != 0:
                 logging.warning(
                     "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
                 )
+        template_file.close()
 
     # output_file: path to where we want to save our result
     # return: status of filling template, returning issues, warnings, or errors
@@ -107,7 +108,7 @@ class EmailFiller:
         regex_pattern = f"{self.open_pattern}.+{self.close_pattern}"
         keywords_pattern = f"(?<={self.open_pattern})(.+)(?={self.close_pattern})"
         for index, row in self.source_df.iterrows():
-            logging.info(f"We are processing row {index}")
+            logging.info(f"Processing row {index}")
             record = {
                 "to": row["to"],
                 "cc": row["cc"] if row["cc"] == NaN else "",
