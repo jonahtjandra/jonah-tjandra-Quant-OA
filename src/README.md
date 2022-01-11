@@ -6,6 +6,8 @@ First and foremost, pip install the dependencies of the program by using this co
 
 The entry point to run the script is the main.py file. In order to run the script properly, main.py will need 2 system arguments: source_data and template. In order to feed this in, use short ops: -t and -d for template and source_data respectively or use long ops --template --source_data. E.g: python main.py -t [template path] -d [source data path]
 
+The email_filler class also supports the functionality to customize your own regex pattern by disclosing an agreement for open and close patterns on class instantiation. If these arguments are not given they will default to \_\_[ and ]\_\_
+
 - Input: Template needs to specify the subject of the email by writing "subject:" as the first word of a line which signifies that line be the subject of the email. The template also needs to include open and close patterns with their keywords enclosed inside these patterns. These keywords will be matched with the source data. All source data needs to include "to", "cc", and "bcc" columns as they will be used in completing the JSON format. Only the "cc" and "bcc" columns are allowed to contain null or empty values.
 
 - Output: In order for the output to preserve the spacing of the email template, the json body output will contain a list of lines.
@@ -43,6 +45,8 @@ The program primarly lives in the email_filler.py. This is the only module you w
 - Make sure to check that the csv file is in the correct format
 
 - Make sure program is able to handle multiple patterns in one line
+
+- Be able to detect if the template is wrong. This is done in two ways. The first is to check whether source data and template both matches exactly with keywords and patterns, this way if a pattern is mistakenly typed in the template it can raise an Exception.
 
 ### Libraries used
 

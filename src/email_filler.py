@@ -18,7 +18,7 @@ class EmailFiller:
     def __init__(self,
                  template: str,
                  source_data: str,
-                 open_pattern: str = "_\[",
+                 open_pattern: str = "__\[",
                  close_pattern: str = "\]__") -> None:
         # ensure open and close patterns are each less than or equal to 5 characters long as per documentation
         if not len(open_pattern) <= 5 and len(close_pattern) <= 5:
@@ -46,7 +46,6 @@ class EmailFiller:
             )
         self.open_pattern = open_pattern
         self.close_pattern = close_pattern
-
         self.check_template()
 
     def check_source_data(self) -> None:
@@ -63,21 +62,40 @@ class EmailFiller:
         template_file = open(self.template, "r")
         keywords_pattern = f"(?<={self.open_pattern})(.+)(?={self.close_pattern})"
         keywords = re.findall(keywords_pattern, str(template_file))
+        # check if all keywords in the template exist as a column in source data
         for keyword in keywords:
             if not self.source_df[keyword]:
                 raise Exception(
-                    "Keyword is not in the source data. Please check that the keywords and columns match."
+                    "Keyword '{keyword}' is not in the source data. Please check that the keywords and columns match."
                 )
+        # check if all source data columns exist as a pattern in email template
+        for column in self.source_df:
+            if column == "to" or column == "cc" or column == "bcc":
+                continue
+            if not column in keywords:
+                logging.warning(
+                    "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
+                )
+                raise Exception(
+                    f"Email template does not contain column '{column}' from source data."
+                )
+
         # check variation of keyword patterns with tolerance of 1
+        open_pattern = re.sub(r"\\", "", self.open_pattern)
+        close_pattern = re.sub(r"\\", "", self.close_pattern)
+        for j in range(len(close_pattern)):
+            keywords_pattern = f"([,.!\?(\* ])(?<={re.escape(open_pattern)})(.+)(?={re.escape(close_pattern[0:j] + close_pattern[j+1:])})([,.!\?(\* ])"
+            if len(re.findall(keywords_pattern, str(template_file))) != 0:
+                logging.warning(
+                    "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
+                )
+
         for i in range(len(self.open_pattern)):
-            for j in range(len(self.close_pattern)):
-                keywords_pattern = f"(?<={self.open_pattern[(0 if i != 0 else 1):i] + self.open_pattern[(i if i != 0 else len(self.open_pattern)):]})(.+)(?={self.close_pattern[(0 if i != 0 else 1):i] + self.close_pattern[(i if i != 0 else len(self.close_pattern)):]})"
-                try:
-                    re.findall(keywords_pattern, str(template_file)).group()
-                except:
-                    logging.warning(
-                        "There might be a typo for the open and close patterns in the template email. Check the both the result and the template email to see if unexpected result exist. If it does, that means a typo occured in the template"
-                    )
+            keywords_pattern = f"([,.!\?(\* ])(?<={re.escape(open_pattern[0:i] + open_pattern[i+1:])})(.+)(?={re.escape(close_pattern)})([,.!\?(\* ])"
+            if len(re.findall(keywords_pattern, str(template_file))) != 0:
+                logging.warning(
+                    "There might be a typo for the open and close patterns in the template email. Check both the result and the template email to see if unexpected result exist. If it does, ensure that the custom or default patterns match the template patterns."
+                )
 
     # output_file: path to where we want to save our result
     # return: status of filling template, returning issues, warnings, or errors
