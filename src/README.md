@@ -4,11 +4,13 @@
 
 This explains in detail how to run the script with your own email template and data source and also how the script works in general.
 
-- Explains input
+The entry point to run the script is the main.py file. In order to run the script properly, main.py will need 2 system arguments: source_data and template. In order to feed this in, use short ops: -t and -d for template and source_data respectively or use long ops --template --source_data. E.g: python main.py -t [template path] -d [source data path]
+
+- Explains input: Template needs to specify the subject of the email by writing "subject:" as the first word of a line which signifies that line be the subject of the email.
 
 - Explains runtime complexities
 
-- Explains output
+- Explains output: In order for the output to preserve the spacing of the email template, the json body output will contain a list of lines, where an empty line would give an empty string
 
 ### Code Structure
 
@@ -22,9 +24,9 @@ This explains the structure of the program and how it works.
 
 - Open and close patterns each needs to have 5 or less characters.
 
-- Tolerance need to be less than the minimum length of open or close pattern.
+- Tolerance is set to 1 for warnings.
 
-- Dealing with warnings, to notify user that the template might have an incorrectly written pattern by using a default tolerance of one character. If a pattern set is found on the template with a single charcter tolerance missing on either the open or close pattern, the program will flag this as a warning and notify the user.
+- Dealing with warnings, to notify user that the template might have an incorrectly written pattern by using an assumed tolerance of one character. If a pattern set is found on the template with a single charcter tolerance missing on either the open or close pattern, the program will flag this as a warning and notify the user.
 
 ### Sanity Checks and Edge Cases Considered:
 
@@ -40,9 +42,9 @@ This explains the structure of the program and how it works.
 
 - The cc and bcc columns are allowed to contain null values.
 
-- Make sure the tolerance of pattern are greater than the minimum length of open and close pattern as we might have different lengths for both. And we still want to leave characters for the patterns.
-
 - Make sure to check that the csv file is in the correct format
+
+- Make sure program is able to handle multiple patterns in one line
 
 ### Test Cases
 
